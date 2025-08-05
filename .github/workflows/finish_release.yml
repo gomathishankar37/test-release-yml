@@ -15,31 +15,41 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Install dependencies
+      - name: Install git-flow
         run: |
           sudo apt-get update
-          sudo apt-get install -y git-flow
-          npm install -g auto-changelog
+          sudo apt-get install -y git-flow-avh
 
-      - name: Extract version
+      - name: Extract release version
         id: extract
         run: |
           VERSION=$(git log -1 --pretty=format:%s | sed -E 's/^Release[[:space:]]+//')
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Initialize Gitflow
-        run: git flow init -d
+      - name: Initialize Gitflow with main → develop
+        run: |
+          git flow init -d <<EOF
+          main
+          develop
+          feature/
+          bugfix/
+          release/
+          hotfix/
+          support/
+          EOF
 
       - name: Finish release
         run: git flow release finish -m "${{ steps.extract.outputs.version }} release" "${{ steps.extract.outputs.version }}"
 
-      - name: Push main, develop, and tags
+      - name: Push branches & tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
