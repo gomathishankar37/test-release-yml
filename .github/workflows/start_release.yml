@@ -1,0 +1,65 @@
+# File: .github/workflows/start_release.yml
+name: Start Gitflow Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_number:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write    # To push branch and open PRs
+
+jobs:
+  start-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Initialize Gitflow
+        run: git flow init -d
+
+      - name: Start release branch
+        run: git flow release start ${{ github.event.inputs.release_number }}
+
+      - name: Generate CHANGELOG
+        run: auto-changelog -v ${{ github.event.inputs.release_number }}
+
+      - name: Commit CHANGELOG
+        run: |
+          git add CHANGELOG.md
+          git commit -m "${{ github.event.inputs.release_number }} release changelog updates"
+
+      - name: Push release branch
+        run: git push origin release/${{ github.event.inputs.release_number }}
+
+      - name: Create PR into main
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: release/${{ github.event.inputs.release_number }}
+          base: main
+          title: "Release ${{ github.event.inputs.release_number }}"
+          body: |
+            Prepares release **${{ github.event.inputs.release_number }}**.
+            Review before merging into *main*.
+
+      - name: Create PR into develop
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: release/${{ github.event.inputs.release_number }}
+          base: develop
+          title: "Back-merge release ${{ github.event.inputs.release_number }} into develop"
+          body: |
+            Merge release **${{ github.event.inputs.release_number }}** back into *develop*.
