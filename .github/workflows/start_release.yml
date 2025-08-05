@@ -10,7 +10,7 @@ on:
         type: string
 
 permissions:
-  contents: write    # To push branch and open PRs
+  contents: write
 
 jobs:
   start-release:
@@ -20,6 +20,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: develop
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-flow
+          npm install -g auto-changelog
 
       - name: Configure Git
         run: |
@@ -52,7 +58,6 @@ jobs:
           title: "Release ${{ github.event.inputs.release_number }}"
           body: |
             Prepares release **${{ github.event.inputs.release_number }}**.
-            Review before merging into *main*.
 
       - name: Create PR into develop
         uses: peter-evans/create-pull-request@v5
