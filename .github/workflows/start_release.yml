@@ -22,7 +22,7 @@ jobs:
           ref: develop
           fetch-depth: 0
 
-      - name: Install dependencies
+      - name: Install git-flow and auto-changelog
         run: |
           sudo apt-get update
           sudo apt-get install -y git-flow npm
@@ -33,11 +33,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Initialize Gitflow defaults and remap branches
+      - name: Initialize Gitflow with main/develop
         run: |
-          git flow init -d
-          git config gitflow.branch.master main
-          git config gitflow.branch.develop develop
+          git flow init <<EOF
+          main
+          develop
+          feature/
+          bugfix/
+          release/
+          hotfix/
+          support/
+          EOF
 
       - name: Start release branch
         run: git flow release start ${{ github.event.inputs.release_number }}
