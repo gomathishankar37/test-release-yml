@@ -18,10 +18,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install git-flow
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git-flow-avh
+          sudo apt-get install -y git-flow npm
+          npm install -g auto-changelog
 
       - name: Extract release version
         id: extract
@@ -34,17 +35,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Initialize Gitflow with main → develop
+      - name: Initialize Gitflow defaults and remap branches
         run: |
-          git flow init -d <<EOF
-          main
-          develop
-          feature/
-          bugfix/
-          release/
-          hotfix/
-          support/
-          EOF
+          git flow init -d
+          git config gitflow.branch.master main
+          git config gitflow.branch.develop develop
 
       - name: Finish release
         run: git flow release finish -m "${{ steps.extract.outputs.version }} release" "${{ steps.extract.outputs.version }}"
